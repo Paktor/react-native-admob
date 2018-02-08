@@ -1,13 +1,13 @@
-#if __has_include(<React/RCTBridgeModule.h>)
+#if __has_include(<React/RCTEventDispatcher.h>)
+#import <React/RCTEventDispatcher.h>
 #import <React/RCTBridgeModule.h>
-#import <React/RCTEventEmitter.h>
 #else
-#import "RCTBridgeModule.h"
-#import "RCTEventEmitter.h"
+#import <React/RCTEventDispatcher.h>
+#import <React/RCTBridgeModule.h>
 #endif
 
 @import GoogleMobileAds;
 
-@interface RNAdMobRewarded : RCTEventEmitter <RCTBridgeModule, GADRewardBasedVideoAdDelegate>
+@interface RNAdMobRewarded : NSObject <RCTBridgeModule, GADRewardBasedVideoAdDelegate>
 @end
 

@@ -5,144 +5,182 @@
 #import <React/UIView+React.h>
 #import <React/RCTLog.h>
 #else
-#import "RCTBridgeModule.h"
+#import <React/RCTBridgeModule.h>
 #import "UIView+React.h"
-#import "RCTLog.h"
+#import <React/RCTLog.h>
 #endif
 
-#include "RCTConvert+GADAdSize.h"
-
-@implementation RNDFPBannerView
-{
+@implementation RNDFPBannerView {
     DFPBannerView  *_bannerView;
 }
 
-- (void)dealloc
+- (void)insertReactSubview:(UIView *)view atIndex:(NSInteger)atIndex
 {
-    _bannerView.delegate = nil;
-    _bannerView.adSizeDelegate = nil;
-    _bannerView.appEventDelegate = nil;
+    RCTLogError(@"AdMob Banner cannot have any subviews");
+    return;
 }
 
-- (instancetype)initWithFrame:(CGRect)frame
+- (void)removeReactSubview:(UIView *)subview
 {
-    if ((self = [super initWithFrame:frame])) {
-        super.backgroundColor = [UIColor clearColor];
+    RCTLogError(@"AdMob Banner cannot have any subviews");
+    return;
+}
 
-        UIWindow *keyWindow = [[UIApplication sharedApplication] keyWindow];
-        UIViewController *rootViewController = [keyWindow rootViewController];
-
-        _bannerView = [[DFPBannerView alloc] initWithAdSize:kGADAdSizeBanner];
-        _bannerView.delegate = self;
-        _bannerView.adSizeDelegate = self;
-        _bannerView.appEventDelegate = self;
-        _bannerView.rootViewController = rootViewController;
-        [self addSubview:_bannerView];
+- (GADAdSize)getAdSizeFromString:(NSString *)bannerSize
+{
+    if ([bannerSize isEqualToString:@"banner"]) {
+        return kGADAdSizeBanner;
+    } else if ([bannerSize isEqualToString:@"largeBanner"]) {
+        return kGADAdSizeLargeBanner;
+    } else if ([bannerSize isEqualToString:@"mediumRectangle"]) {
+        return kGADAdSizeMediumRectangle;
+    } else if ([bannerSize isEqualToString:@"fullBanner"]) {
+        return kGADAdSizeFullBanner;
+    } else if ([bannerSize isEqualToString:@"leaderboard"]) {
+        return kGADAdSizeLeaderboard;
+    } else if ([bannerSize isEqualToString:@"smartBannerPortrait"]) {
+        return kGADAdSizeSmartBannerPortrait;
+    } else if ([bannerSize isEqualToString:@"smartBannerLandscape"]) {
+        return kGADAdSizeSmartBannerLandscape;
     }
-
-    return self;
+    else {
+        return kGADAdSizeBanner;
+    }
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wobjc-missing-super-calls"
-- (void)insertReactSubview:(UIView *)subview atIndex:(NSInteger)atIndex
-{
-    RCTLogError(@"RNDFPBannerView cannot have subviews");
-}
-#pragma clang diagnostic pop
-
-- (void)loadBanner {
-    GADRequest *request = [GADRequest request];
-    request.testDevices = _testDevices;
-    [_bannerView loadRequest:request];
-}
-
-- (void)setValidAdSizes:(NSArray *)adSizes
-{
-    NSMutableArray *validAdSizes = [[NSMutableArray alloc] initWithCapacity:adSizes.count];
-    [adSizes enumerateObjectsUsingBlock:^(id jsonValue, NSUInteger idx, __unused BOOL *stop) {
-        GADAdSize adSize = [RCTConvert GADAdSize:jsonValue];
-        if (GADAdSizeEqualToSize(adSize, kGADAdSizeInvalid)) {
-            RCTLogWarn(@"Invalid adSize %@", jsonValue);
-        } else {
-            [validAdSizes addObject:NSValueFromGADAdSize(adSize)];
+-(void)loadBanner {
+    if (_adUnitID && _bannerSize) {
+        GADAdSize size = [self getAdSizeFromString:_bannerSize];
+        _bannerView = [[DFPBannerView alloc] initWithAdSize:size];
+        [_bannerView setAppEventDelegate:self]; //added Admob event dispatch listener
+        if(!CGRectEqualToRect(self.bounds, _bannerView.bounds)) {
+            if (self.onSizeChange) {
+                self.onSizeChange(@{
+                    @"width": [NSNumber numberWithFloat: _bannerView.bounds.size.width],
+                    @"height": [NSNumber numberWithFloat: _bannerView.bounds.size.height]
+                });
+            }
         }
-    }];
-    _bannerView.validAdSizes = validAdSizes;
+        _bannerView.delegate = self;
+        _bannerView.adUnitID = _adUnitID;
+        _bannerView.rootViewController = [UIApplication sharedApplication].delegate.window.rootViewController;
+        GADRequest *request = [GADRequest request];
+        if(_testDeviceID) {
+            if([_testDeviceID isEqualToString:@"EMULATOR"]) {
+                request.testDevices = @[kGADSimulatorID];
+            } else {
+                request.testDevices = @[_testDeviceID];
+            }
+        }
+
+        [_bannerView loadRequest:request];
+    }
+}
+
+
+- (void)adView:(DFPBannerView *)banner
+didReceiveAppEvent:(NSString *)name
+      withInfo:(NSString *)info {
+    NSLog(@"Received app event (%@, %@)", name, info);
+    NSMutableDictionary *myDictionary = [[NSMutableDictionary alloc] init];
+    myDictionary[name] = info;
+    if (self.onAdmobDispatchAppEvent) {
+        self.onAdmobDispatchAppEvent(@{ name: info });
+    }
+}
+
+- (void)setBannerSize:(NSString *)bannerSize
+{
+    if(![bannerSize isEqual:_bannerSize]) {
+        _bannerSize = bannerSize;
+        if (_bannerView) {
+            [_bannerView removeFromSuperview];
+        }
+        [self loadBanner];
+    }
+}
+
+- (void)setAdUnitID:(NSString *)adUnitID
+{
+    if(![adUnitID isEqual:_adUnitID]) {
+        _adUnitID = adUnitID;
+        if (_bannerView) {
+            [_bannerView removeFromSuperview];
+        }
+
+        [self loadBanner];
+    }
+}
+- (void)setTestDeviceID:(NSString *)testDeviceID
+{
+    if(![testDeviceID isEqual:_testDeviceID]) {
+        _testDeviceID = testDeviceID;
+        if (_bannerView) {
+            [_bannerView removeFromSuperview];
+        }
+        [self loadBanner];
+    }
 }
 
 -(void)layoutSubviews
 {
-    [super layoutSubviews];
-    _bannerView.frame = self.bounds;
+    [super layoutSubviews ];
+
+    _bannerView.frame = CGRectMake(
+                                   self.bounds.origin.x,
+                                   self.bounds.origin.x,
+                                   _bannerView.frame.size.width,
+                                   _bannerView.frame.size.height);
+    [self addSubview:_bannerView];
 }
 
-# pragma mark GADBannerViewDelegate
+- (void)removeFromSuperview
+{
+    [super removeFromSuperview];
+}
 
 /// Tells the delegate an ad request loaded an ad.
-- (void)adViewDidReceiveAd:(DFPBannerView *)adView
-{
-    if (self.onSizeChange) {
-        self.onSizeChange(@{
-                            @"width": @(adView.frame.size.width),
-                            @"height": @(adView.frame.size.height) });
-    }
-    if (self.onAdLoaded) {
-        self.onAdLoaded(@{});
+- (void)adViewDidReceiveAd:(DFPBannerView *)adView {
+    if (self.onAdViewDidReceiveAd) {
+        self.onAdViewDidReceiveAd(@{});
     }
 }
 
 /// Tells the delegate an ad request failed.
 - (void)adView:(DFPBannerView *)adView
-didFailToReceiveAdWithError:(GADRequestError *)error
-{
-    if (self.onAdFailedToLoad) {
-        self.onAdFailedToLoad(@{ @"error": @{ @"message": [error localizedDescription] } });
+didFailToReceiveAdWithError:(GADRequestError *)error {
+    if (self.onDidFailToReceiveAdWithError) {
+        self.onDidFailToReceiveAdWithError(@{ @"error": [error localizedDescription] });
     }
 }
 
 /// Tells the delegate that a full screen view will be presented in response
 /// to the user clicking on an ad.
-- (void)adViewWillPresentScreen:(DFPBannerView *)adView
-{
-    if (self.onAdOpened) {
-        self.onAdOpened(@{});
+- (void)adViewWillPresentScreen:(DFPBannerView *)adView {
+    if (self.onAdViewWillPresentScreen) {
+        self.onAdViewWillPresentScreen(@{});
     }
 }
 
 /// Tells the delegate that the full screen view will be dismissed.
-- (void)adViewWillDismissScreen:(__unused DFPBannerView *)adView
-{
-    if (self.onAdClosed) {
-        self.onAdClosed(@{});
+- (void)adViewWillDismissScreen:(DFPBannerView *)adView {
+    if (self.onAdViewWillDismissScreen) {
+        self.onAdViewWillDismissScreen(@{});
+    }
+}
+
+/// Tells the delegate that the full screen view has been dismissed.
+- (void)adViewDidDismissScreen:(DFPBannerView *)adView {
+    if (self.onAdViewDidDismissScreen) {
+        self.onAdViewDidDismissScreen(@{});
     }
 }
 
 /// Tells the delegate that a user click will open another app (such as
 /// the App Store), backgrounding the current app.
-- (void)adViewWillLeaveApplication:(DFPBannerView *)adView
-{
-    if (self.onAdLeftApplication) {
-        self.onAdLeftApplication(@{});
-    }
-}
-
-# pragma mark GADAdSizeDelegate
-
-- (void)adView:(GADBannerView *)bannerView willChangeAdSizeTo:(GADAdSize)size
-{
-    CGSize adSize = CGSizeFromGADAdSize(size);
-    self.onSizeChange(@{
-                        @"width": @(adSize.width),
-                        @"height": @(adSize.height) });
-}
-
-# pragma mark GADAppEventDelegate
-
-- (void)adView:(GADBannerView *)banner didReceiveAppEvent:(NSString *)name withInfo:(NSString *)info
-{
-    if (self.onAppEvent) {
-        self.onAppEvent(@{ @"name": name, @"info": info });
+- (void)adViewWillLeaveApplication:(DFPBannerView *)adView {
+    if (self.onAdViewWillLeaveApplication) {
+        self.onAdViewWillLeaveApplication(@{});
     }
 }
 
