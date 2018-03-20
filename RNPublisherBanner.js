@@ -5,6 +5,7 @@ import {
   requireNativeComponent,
   View,
   NativeEventEmitter,
+  ViewPropTypes
 } from 'react-native';
 
 const RNBanner = requireNativeComponent('RNAdMobDFP', PublisherBanner);
@@ -47,7 +48,7 @@ export default class PublisherBanner extends React.Component {
 }
 
 PublisherBanner.propTypes = {
-  style: View.propTypes.style,
+  style: ViewPropTypes.style,
 
   /**
    * AdMob iOS library banner size constants
