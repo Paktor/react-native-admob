@@ -44,6 +44,11 @@ public class RNAdMobRewardedVideoAdModule extends ReactContextBaseJavaModule imp
     }
 
     @Override
+    public void onRewardedVideoCompleted() {
+        sendEvent("rewardedVideoDidRewardUser", null);
+    }
+
+    @Override
     public void onRewardedVideoAdLoaded() {
         sendEvent("rewardedVideoDidLoad", null);
         requestAdCallback.invoke();
