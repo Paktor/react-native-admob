@@ -1,6 +1,6 @@
 package com.sbugert.rnadmob;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.view.View.OnLayoutChangeListener;
 import android.view.View;
 
@@ -17,6 +17,7 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
 
 import java.util.Map;
 
@@ -80,7 +81,7 @@ public class RNAdMobBannerViewManager extends SimpleViewManager<ReactViewGroup> 
   }
 
   protected void attachNewAdView(final ReactViewGroup view) {
-    final AdView adView = new AdView(mThemedReactContext);
+    final AdView adView = new AdView(mThemedReactContext.getCurrentActivity());
 
     // destroy old AdView if present
     AdView oldAdView = (AdView) view.getChildAt(0);
@@ -105,9 +106,9 @@ public class RNAdMobBannerViewManager extends SimpleViewManager<ReactViewGroup> 
       }
 
       @Override
-      public void onAdFailedToLoad(int errorCode) {
+      public void onAdFailedToLoad(LoadAdError adError) {
         WritableMap event = Arguments.createMap();
-        switch (errorCode) {
+        switch (adError.getCode()) {
           case AdRequest.ERROR_CODE_INTERNAL_ERROR:
             event.putString("error", "ERROR_CODE_INTERNAL_ERROR");
             break;
@@ -135,10 +136,10 @@ public class RNAdMobBannerViewManager extends SimpleViewManager<ReactViewGroup> 
         mEventEmitter.receiveEvent(view.getId(), Events.EVENT_WILL_DISMISS.toString(), null);
       }
 
-      @Override
-      public void onAdLeftApplication() {
-        mEventEmitter.receiveEvent(view.getId(), Events.EVENT_WILL_LEAVE_APP.toString(), null);
-      }
+//      @Override
+//      public void onAdLeftApplication() {
+//        mEventEmitter.receiveEvent(view.getId(), Events.EVENT_WILL_LEAVE_APP.toString(), null);
+//      }
     });
   }
 
@@ -206,13 +207,13 @@ public class RNAdMobBannerViewManager extends SimpleViewManager<ReactViewGroup> 
   private void loadAd(final AdView adView) {
     if (adView.getAdSize() != null && adView.getAdUnitId() != null) {
       AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
-      if (testDeviceID != null){
-        if (testDeviceID.equals("EMULATOR")) {
-          adRequestBuilder = adRequestBuilder.addTestDevice(AdRequest.DEVICE_ID_EMULATOR);
-        } else {
-          adRequestBuilder = adRequestBuilder.addTestDevice(testDeviceID);
-        }
-      }
+//      if (testDeviceID != null){
+//        if (testDeviceID.equals("EMULATOR")) {
+//          adRequestBuilder = adRequestBuilder.addTestDevice(AdRequest.DEVICE_ID_EMULATOR);
+//        } else {
+//          adRequestBuilder = adRequestBuilder.addTestDevice(testDeviceID);
+//        }
+//      }
       AdRequest adRequest = adRequestBuilder.build();
       adView.loadAd(adRequest);
     }
