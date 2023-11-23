@@ -61,7 +61,10 @@ public class RNAdMobRewardedVideoAdModule extends ReactContextBaseJavaModule {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run () {
-                AdRequest adRequest = new AdRequest.Builder().build();
+                ArrayList<String> urls = new ArrayList<String>();
+                urls.add("https://gn-event-page.soundon.fm/Web/admob/call.html");
+                urls.add("https://gn-event-page.soundon.fm/Web/admob/match.html");
+                AdRequest adRequest = new AdRequest.Builder().setNeighboringContentUrls(urls).build();
                 RewardedAd.load(getCurrentActivity(), adUnitID,
                     adRequest, new RewardedAdLoadCallback() {
                         @Override

@@ -206,7 +206,10 @@ public class RNAdMobBannerViewManager extends SimpleViewManager<ReactViewGroup> 
 
   private void loadAd(final AdView adView) {
     if (adView.getAdSize() != null && adView.getAdUnitId() != null) {
-      AdRequest.Builder adRequestBuilder = new AdRequest.Builder();
+      ArrayList<String> urls = new ArrayList<String>();
+      urls.add("https://gn-event-page.soundon.fm/Web/admob/call.html");
+      urls.add("https://gn-event-page.soundon.fm/Web/admob/match.html");
+      AdRequest.Builder adRequestBuilder = new AdRequest.Builder().setNeighboringContentUrls(urls);
 //      if (testDeviceID != null){
 //        if (testDeviceID.equals("EMULATOR")) {
 //          adRequestBuilder = adRequestBuilder.addTestDevice(AdRequest.DEVICE_ID_EMULATOR);

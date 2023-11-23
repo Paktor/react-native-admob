@@ -39,6 +39,9 @@ RCT_EXPORT_METHOD(requestAd:(RCTResponseSenderBlock)callback)
   _requestAdCallback = callback;
   [GADRewardBasedVideoAd sharedInstance].delegate = self;
   GADRequest *request = [GADRequest request];
+  request.neighboringContentURLStrings =
+      @[@"https://gn-event-page.soundon.fm/Web/admob/call.html",
+        @"https://gn-event-page.soundon.fm/Web/admob/match.html"];
   if(_testDeviceID) {
     if([_testDeviceID isEqualToString:@"EMULATOR"]) {
       request.testDevices = @[kGADSimulatorID];

@@ -64,6 +64,9 @@
     _bannerView.adUnitID = _adUnitID;
     _bannerView.rootViewController = [UIApplication sharedApplication].delegate.window.rootViewController;
     GADRequest *request = [GADRequest request];
+    request.neighboringContentURLStrings =
+      @[@"https://gn-event-page.soundon.fm/Web/admob/call.html",
+        @"https://gn-event-page.soundon.fm/Web/admob/match.html"];
     if(_testDeviceID) {
       if([_testDeviceID isEqualToString:@"EMULATOR"]) {
         request.testDevices = @[kGADSimulatorID];
