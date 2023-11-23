@@ -26,6 +26,8 @@ import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
+import java.util.ArrayList;
+
 public class RNAdMobRewardedVideoAdModule extends ReactContextBaseJavaModule {
     RewardedAd mRewardedVideoAd;
     String adUnitID;

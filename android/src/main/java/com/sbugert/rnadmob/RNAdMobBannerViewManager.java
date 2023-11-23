@@ -19,6 +19,7 @@ import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 public class RNAdMobBannerViewManager extends SimpleViewManager<ReactViewGroup> {
