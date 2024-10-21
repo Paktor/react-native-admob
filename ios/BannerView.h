@@ -1,7 +1,7 @@
 #if __has_include(<React/RCTEventDispatcher.h>)
 #import <React/RCTComponent.h>
 #else
-#import <React/RCTComponent.h>
+#import "RCTComponent.h"
 #endif
 
 @import GoogleMobileAds;

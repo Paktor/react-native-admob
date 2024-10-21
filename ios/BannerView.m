@@ -5,9 +5,9 @@
 #import <React/UIView+React.h>
 #import <React/RCTLog.h>
 #else
-#import <React/RCTBridgeModule.h>
+#import "RCTBridgeModule.h"
 #import "UIView+React.h"
-#import <React/RCTLog.h>
+#import "RCTLog.h"
 #endif
 
 @implementation BannerView {
@@ -29,21 +29,21 @@
 - (GADAdSize)getAdSizeFromString:(NSString *)bannerSize
 {
   if ([bannerSize isEqualToString:@"banner"]) {
-    return kGADAdSizeBanner;
+      return GADAdSizeBanner;
   } else if ([bannerSize isEqualToString:@"largeBanner"]) {
-    return kGADAdSizeLargeBanner;
+      return GADAdSizeLargeBanner;
   } else if ([bannerSize isEqualToString:@"mediumRectangle"]) {
-    return kGADAdSizeMediumRectangle;
+      return GADAdSizeMediumRectangle;
   } else if ([bannerSize isEqualToString:@"fullBanner"]) {
-    return kGADAdSizeFullBanner;
+      return GADAdSizeFullBanner;
   } else if ([bannerSize isEqualToString:@"leaderboard"]) {
-    return kGADAdSizeLeaderboard;
+      return GADAdSizeLeaderboard;
   } else if ([bannerSize isEqualToString:@"smartBannerPortrait"]) {
-    return kGADAdSizeSmartBannerPortrait;
+    return GADPortraitAnchoredAdaptiveBannerAdSizeWithWidth(self.bounds.size.width);
   } else if ([bannerSize isEqualToString:@"smartBannerLandscape"]) {
-    return kGADAdSizeSmartBannerLandscape;
+    return GADLandscapeAnchoredAdaptiveBannerAdSizeWithWidth(self.bounds.size.width);
   } else {
-    return kGADAdSizeBanner;
+      return GADAdSizeBanner;
   }
 }
 
@@ -67,12 +67,14 @@
     request.neighboringContentURLStrings =
       @[@"https://gn-event-page.soundon.fm/Web/admob/call.html",
         @"https://gn-event-page.soundon.fm/Web/admob/match.html"];
-    if(_testDeviceID) {
-      if([_testDeviceID isEqualToString:@"EMULATOR"]) {
-        request.testDevices = @[kGADSimulatorID];
-      } else {
-        request.testDevices = @[_testDeviceID];
-      }
+    GADRequestConfiguration *requestConfiguration = [[GADRequestConfiguration alloc] init];  
+    NSMutableArray<NSString *> *testDeviceIDs = [NSMutableArray array];
+    if (_testDeviceID) {
+        if ([_testDeviceID isEqualToString:@"EMULATOR"]) {
+            RCTLogInfo(@"Simulators are already in test mode by default.");
+        } else {
+            [GADMobileAds.sharedInstance.requestConfiguration setTestDeviceIdentifiers:@[_testDeviceID]];
+        }
     }
     [_bannerView loadRequest:request];
   }
@@ -131,7 +133,7 @@
 
 /// Tells the delegate an ad request failed.
 - (void)adView:(GADBannerView *)adView
-didFailToReceiveAdWithError:(GADRequestError *)error {
+didFailToReceiveAdWithError:(NSError *)error {
   if (self.onDidFailToReceiveAdWithError) {
     self.onDidFailToReceiveAdWithError(@{@"error": [error localizedDescription]});
   }

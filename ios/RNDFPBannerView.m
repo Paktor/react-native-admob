@@ -5,13 +5,13 @@
 #import <React/UIView+React.h>
 #import <React/RCTLog.h>
 #else
-#import <React/RCTBridgeModule.h>
+#import "RCTBridgeModule.h"
 #import "UIView+React.h"
-#import <React/RCTLog.h>
+#import "RCTLog.h"
 #endif
 
 @implementation RNDFPBannerView {
-    DFPBannerView  *_bannerView;
+    GAMBannerView  *_bannerView;
 }
 
 - (void)insertReactSubview:(UIView *)view atIndex:(NSInteger)atIndex
@@ -29,29 +29,29 @@
 - (GADAdSize)getAdSizeFromString:(NSString *)bannerSize
 {
     if ([bannerSize isEqualToString:@"banner"]) {
-        return kGADAdSizeBanner;
+        return GADAdSizeBanner;
     } else if ([bannerSize isEqualToString:@"largeBanner"]) {
-        return kGADAdSizeLargeBanner;
+        return GADAdSizeLargeBanner;
     } else if ([bannerSize isEqualToString:@"mediumRectangle"]) {
-        return kGADAdSizeMediumRectangle;
+        return GADAdSizeMediumRectangle;
     } else if ([bannerSize isEqualToString:@"fullBanner"]) {
-        return kGADAdSizeFullBanner;
+        return GADAdSizeFullBanner;
     } else if ([bannerSize isEqualToString:@"leaderboard"]) {
-        return kGADAdSizeLeaderboard;
+        return GADAdSizeLeaderboard;
     } else if ([bannerSize isEqualToString:@"smartBannerPortrait"]) {
-        return kGADAdSizeSmartBannerPortrait;
+        return GADPortraitAnchoredAdaptiveBannerAdSizeWithWidth(self.bounds.size.width);
     } else if ([bannerSize isEqualToString:@"smartBannerLandscape"]) {
-        return kGADAdSizeSmartBannerLandscape;
+        return GADAdSizeFullWidthLandscapeWithHeight(self.bounds.size.width);
     }
     else {
-        return kGADAdSizeBanner;
+        return GADAdSizeBanner;
     }
 }
 
 -(void)loadBanner {
     if (_adUnitID && _bannerSize) {
         GADAdSize size = [self getAdSizeFromString:_bannerSize];
-        _bannerView = [[DFPBannerView alloc] initWithAdSize:size];
+        _bannerView = [[GAMBannerView alloc] initWithAdSize:size];
         [_bannerView setAppEventDelegate:self]; //added Admob event dispatch listener
         if(!CGRectEqualToRect(self.bounds, _bannerView.bounds)) {
             if (self.onSizeChange) {
@@ -67,9 +67,9 @@
         GADRequest *request = [GADRequest request];
         if(_testDeviceID) {
             if([_testDeviceID isEqualToString:@"EMULATOR"]) {
-                request.testDevices = @[kGADSimulatorID];
+                RCTLogInfo(@"Simulators are already in test mode by default.");
             } else {
-                request.testDevices = @[_testDeviceID];
+                [GADMobileAds.sharedInstance.requestConfiguration setTestDeviceIdentifiers:@[_testDeviceID]];
             }
         }
 
@@ -78,7 +78,7 @@
 }
 
 
-- (void)adView:(DFPBannerView *)banner
+- (void)adView:(GAMBannerView *)banner
 didReceiveAppEvent:(NSString *)name
       withInfo:(NSString *)info {
     NSLog(@"Received app event (%@, %@)", name, info);
@@ -140,15 +140,15 @@ didReceiveAppEvent:(NSString *)name
 }
 
 /// Tells the delegate an ad request loaded an ad.
-- (void)adViewDidReceiveAd:(DFPBannerView *)adView {
+- (void)adViewDidReceiveAd:(GAMBannerView *)adView {
     if (self.onAdViewDidReceiveAd) {
         self.onAdViewDidReceiveAd(@{});
     }
 }
 
 /// Tells the delegate an ad request failed.
-- (void)adView:(DFPBannerView *)adView
-didFailToReceiveAdWithError:(GADRequestError *)error {
+- (void)adView:(GAMBannerView *)adView
+didFailToReceiveAdWithError:(NSError *)error {
     if (self.onDidFailToReceiveAdWithError) {
         self.onDidFailToReceiveAdWithError(@{ @"error": [error localizedDescription] });
     }
@@ -156,21 +156,21 @@ didFailToReceiveAdWithError:(GADRequestError *)error {
 
 /// Tells the delegate that a full screen view will be presented in response
 /// to the user clicking on an ad.
-- (void)adViewWillPresentScreen:(DFPBannerView *)adView {
+- (void)adViewWillPresentScreen:(GAMBannerView *)adView {
     if (self.onAdViewWillPresentScreen) {
         self.onAdViewWillPresentScreen(@{});
     }
 }
 
 /// Tells the delegate that the full screen view will be dismissed.
-- (void)adViewWillDismissScreen:(DFPBannerView *)adView {
+- (void)adViewWillDismissScreen:(GAMBannerView *)adView {
     if (self.onAdViewWillDismissScreen) {
         self.onAdViewWillDismissScreen(@{});
     }
 }
 
 /// Tells the delegate that the full screen view has been dismissed.
-- (void)adViewDidDismissScreen:(DFPBannerView *)adView {
+- (void)adViewDidDismissScreen:(GAMBannerView *)adView {
     if (self.onAdViewDidDismissScreen) {
         self.onAdViewDidDismissScreen(@{});
     }
@@ -178,7 +178,7 @@ didFailToReceiveAdWithError:(GADRequestError *)error {
 
 /// Tells the delegate that a user click will open another app (such as
 /// the App Store), backgrounding the current app.
-- (void)adViewWillLeaveApplication:(DFPBannerView *)adView {
+- (void)adViewWillLeaveApplication:(GAMBannerView *)adView {
     if (self.onAdViewWillLeaveApplication) {
         self.onAdViewWillLeaveApplication(@{});
     }

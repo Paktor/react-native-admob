@@ -1,14 +1,14 @@
 #if __has_include(<React/RCTComponent.h>)
 #import <React/RCTComponent.h>
 #else
-#import <React/RCTComponent.h>
+#import "RCTComponent.h"
 #endif
 
 @import GoogleMobileAds;
 
 @class RCTEventDispatcher;
 
-@interface RNDFPBannerView : UIView <GADBannerViewDelegate>
+@interface RNDFPBannerView : UIView <GADBannerViewDelegate, GADAppEventDelegate>
 
 @property (nonatomic, copy) NSString *bannerSize;
 @property (nonatomic, copy) NSString *adUnitID;
