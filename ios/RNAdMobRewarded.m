@@ -86,5 +86,13 @@ RCT_EXPORT_METHOD(isReady:(RCTResponseSenderBlock)callback)
                                                   body:@{@"error": [error localizedDescription]}];
 }
 
-
+- (NSArray<NSString *> *)supportedEvents {
+  return @[
+    @"rewardedVideoDidLoad",
+    @"rewardedVideoDidOpen",
+    @"rewardedVideoDidClose",
+    @"rewardedVideoDidRewardUser",
+    @"rewardedVideoDidFailToLoad"
+  ];
+}
 @end
