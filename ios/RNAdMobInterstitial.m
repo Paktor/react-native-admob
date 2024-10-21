@@ -1,61 +1,46 @@
 #import "RNAdMobInterstitial.h"
+#import <GoogleMobileAds/GoogleMobileAds.h>
+#import <React/RCTEventEmitter.h>
 
-@implementation RNAdMobInterstitial {
-  GADInterstitial  *_interstitial;
-  NSString *_adUnitID;
-  NSString *_testDeviceID;
-  RCTResponseSenderBlock _requestAdCallback;
-  RCTResponseSenderBlock _showAdCallback;
-}
+@implementation RNAdMobInterstitial
 
 @synthesize bridge = _bridge;
 
-- (dispatch_queue_t)methodQueue
-{
-  return dispatch_get_main_queue();
-}
-
 RCT_EXPORT_MODULE();
 
-#pragma mark exported methods
+- (NSArray<NSString *> *)supportedEvents {
+    return @[@"interstitialDidLoad", @"interstitialDidFailToLoad", @"interstitialDidOpen", @"interstitialDidClose", @"interstitialWillLeaveApplication"];
+}
+
+- (dispatch_queue_t)methodQueue {
+    return dispatch_get_main_queue();
+}
 
 RCT_EXPORT_METHOD(setAdUnitID:(NSString *)adUnitID)
 {
   _adUnitID = adUnitID;
 }
 
-RCT_EXPORT_METHOD(setTestDeviceID:(NSString *)testDeviceID)
-{
-  _testDeviceID = testDeviceID;
-}
-
 RCT_EXPORT_METHOD(requestAd:(RCTResponseSenderBlock)callback)
 {
-  if ([_interstitial hasBeenUsed] || _interstitial == nil) {
     _requestAdCallback = callback;
-
-    _interstitial = [[GADInterstitial alloc] initWithAdUnitID:_adUnitID];
-    _interstitial.delegate = self;
-
     GADRequest *request = [GADRequest request];
-    if(_testDeviceID) {
-      if([_testDeviceID isEqualToString:@"EMULATOR"]) {
-        request.testDevices = @[kGADSimulatorID];
-      } else {
-        request.testDevices = @[_testDeviceID];
-      }
+    [GADInterstitialAd loadWithAdUnitID:_adUnitID request:request completionHandler:^(GADInterstitialAd * _Nullable interstitialAd, NSError * _Nullable error) {
+    if (error) {
+      callback(@[[error localizedDescription]]);
+      return;
     }
-    [_interstitial loadRequest:request];
-  } else {
-    callback(@[@"Ad is already loaded."]); // TODO: make proper error via RCTUtils.h
-  }
+    _interstitialAd = interstitialAd;
+    _interstitialAd.fullScreenContentDelegate = self;
+    callback(@[[NSNull null]]);
+  }];
 }
 
 RCT_EXPORT_METHOD(showAd:(RCTResponseSenderBlock)callback)
 {
-  if ([_interstitial isReady]) {
+  if (_interstitialAd) {
     _showAdCallback = callback;
-    [_interstitial presentFromRootViewController:[UIApplication sharedApplication].delegate.window.rootViewController];
+    [_interstitialAd presentFromRootViewController:[UIApplication sharedApplication].delegate.window.rootViewController];
   }
   else {
     callback(@[@"Ad is not ready."]); // TODO: make proper error via RCTUtils.h
@@ -64,34 +49,32 @@ RCT_EXPORT_METHOD(showAd:(RCTResponseSenderBlock)callback)
 
 RCT_EXPORT_METHOD(isReady:(RCTResponseSenderBlock)callback)
 {
-  callback(@[[NSNumber numberWithBool:[_interstitial isReady]]]);
+  callback(@[[NSNumber numberWithBool:_interstitialAd != nil]]);
 }
 
 
-#pragma mark delegate events
+#pragma mark - GADFullScreenContentDelegate
 
-- (void)interstitialDidReceiveAd:(GADInterstitial *)ad {
-  [self.bridge.eventDispatcher sendDeviceEventWithName:@"interstitialDidLoad" body:nil];
-  _requestAdCallback(@[[NSNull null]]);
+- (void)adDidRecordImpression:(id<GADFullScreenPresentingAd>)ad {
+  [self sendEventWithName:@"interstitialDidLoad" body:nil];
 }
 
-- (void)interstitial:(GADInterstitial *)interstitial
-didFailToReceiveAdWithError:(GADRequestError *)error {
-  [self.bridge.eventDispatcher sendDeviceEventWithName:@"interstitialDidFailToLoad" body:@{@"name": [error description]}];
-  _requestAdCallback(@[[error description]]);
+- (void)ad:(id<GADFullScreenPresentingAd>)ad didFailToPresentFullScreenContentWithError:(NSError *)error {
+  [self sendEventWithName:@"interstitialDidFailToLoad" body:@{@"name": [error localizedDescription]}];
+  _requestAdCallback(@[[error localizedDescription]]);
 }
 
-- (void)interstitialWillPresentScreen:(GADInterstitial *)ad {
-  [self.bridge.eventDispatcher sendDeviceEventWithName:@"interstitialDidOpen" body:nil];
+- (void)adWillPresentFullScreenContent:(id<GADFullScreenPresentingAd>)ad {
+  [self sendEventWithName:@"interstitialDidOpen" body:nil];
   _showAdCallback(@[[NSNull null]]);
 }
 
-- (void)interstitialDidDismissScreen:(GADInterstitial *)ad {
-  [self.bridge.eventDispatcher sendDeviceEventWithName:@"interstitialDidClose" body:nil];
+- (void)adDidDismissFullScreenContent:(id<GADFullScreenPresentingAd>)ad {
+  [self sendEventWithName:@"interstitialDidClose" body:nil];
 }
 
-- (void)interstitialWillLeaveApplication:(GADInterstitial *)ad {
-  [self.bridge.eventDispatcher sendDeviceEventWithName:@"interstitialWillLeaveApplication" body:nil];
+- (void)adWillLeaveApplication:(id<GADFullScreenPresentingAd>)ad {
+  [self sendEventWithName:@"interstitialWillLeaveApplication" body:nil];
 }
 
 @end
